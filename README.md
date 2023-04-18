@@ -3,8 +3,9 @@ Simple and plain Huffman coding
 
 # Summary
 This implementation of Huffman coding is used for educational purposes, no optimizations were introduced.<br>
-Could be slow but still can be used for some practical projects.<br><br>
-May contain bugs!
+Could be slow but still can be used for some practical projects.<br>
+Algorithm compresses text almost in half like usual Huffman coder.<br><br>
+Was not tested and may contain bugs!
 
 # License
 The ISC License
