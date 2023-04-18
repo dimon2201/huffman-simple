@@ -1,5 +1,5 @@
 # huffman-simple
-Simple and plain Huffman coding
+Simple and easy Huffman coding
 
 # Summary
 This implementation of Huffman coding is used for educational purposes, no optimizations were introduced.<br>
