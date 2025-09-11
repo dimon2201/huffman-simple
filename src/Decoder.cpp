@@ -3,47 +3,54 @@
 
 huffman_simple::Decoder::Decoder(CodecIOState& state)
 {
-    uint8_t* inputData = (uint8_t*)state.OutputData;
+    LogToConsole("Decoding output data...");
+
+    u8* inputData = (u8*)state.GetOutputData();
 
     // Read metadata
-    uint64_t treeByteWidth = ((uint32_t*)inputData)[0];
-    uint64_t tableByteWidth = ((uint32_t*)inputData)[1];
-    uint64_t inputSymbolCount = ((uint32_t*)inputData)[2];
+    const usize treeByteSize = ((uint32_t*)inputData)[0];
+    const usize tableByteSize = ((uint32_t*)inputData)[1];
+    const usize inputSymbolCount = ((uint32_t*)inputData)[2];
     inputData += 12;
     
-    uint8_t* outputData = (uint8_t*)state.InputData;
-    const TreeNode* tree = (const TreeNode*)malloc(treeByteWidth);
-    const uint32_t* table = (const uint32_t*)malloc(tableByteWidth);
-    memcpy((void*)tree, inputData, treeByteWidth);
-    inputData += treeByteWidth;
-    memcpy((void*)table, inputData, tableByteWidth);
-    inputData += tableByteWidth;
+    u8* const outputData = (u8* const)state.GetInputData();
+    const TreeNode* tree = (const TreeNode*)malloc(treeByteSize);
+    const uint32_t* table = (const uint32_t*)malloc(tableByteSize);
+    memcpy((void*)tree, inputData, treeByteSize);
+    inputData += treeByteSize;
+    memcpy((void*)table, inputData, tableByteSize);
+    inputData += tableByteSize;
 
     // Decode Huffman codes to original fixed codes
     BitReader br(inputData);
-    const size_t nodeCount = treeByteWidth / sizeof(TreeNode);
-    const uint32_t rootNodeIndex = nodeCount - 1;
-    for (size_t i = 0; i < inputSymbolCount; i++)
+    const usize nodeCount = treeByteSize / sizeof(TreeNode);
+    const u32 rootNodeIndex = (u32)nodeCount - 1;
+    for (usize i = 0; i < inputSymbolCount; i++)
     {
-        uint16_t symbol = br.ReadBitsWithTreeNodes(rootNodeIndex, tree);
-        outputData[i] = (uint8_t)symbol;
+        usize bytesRead = 0;
+        u16 symbol = br.ReadBitsWithTreeNodes(rootNodeIndex, tree, bytesRead);
+        outputData[i] = (u8)symbol;
+        if (bytesRead >= K_MAX_OUTPUT_BUFFER_BYTE_SIZE)
+        {
+            LogToConsole("Decoded input data byte size '" + std::to_string(bytesRead) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
+            break;
+        }
     }
-
     free((void*)tree);
     free((void*)table);
 
     // Output to file if needed
-    if (state.OutputFileName == nullptr) { return; }
+    const std::string& outputFilename = state.GetOutputFilename();
+    if (outputFilename == "")
+        return;
 
-    std::string outputFileName = std::string(state.OutputFileName) + ".output";
+    std::string outputFileName = outputFilename + ".output";
     std::ofstream ofs(outputFileName.c_str(), std::ios::out | std::ios::binary);
-    if (!ofs) { return; }
+    if (!ofs)
+        return;
 
     ofs.write((const char*)outputData, inputSymbolCount);
     ofs.close();
-}
 
-huffman_simple::Decoder::~Decoder()
-{
-
+    LogToConsole("    Success");
 }

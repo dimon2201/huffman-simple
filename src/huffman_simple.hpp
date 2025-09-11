@@ -1,124 +1,150 @@
 #pragma once
 
+#include <iostream>
 #include <cstdint>
 #include <vector>
+#include <string>
+#include "types.hpp"
+
+using namespace types;
 
 namespace huffman_simple
 {
     class Tree;
-    class Encoder;
 
-    constexpr uint16_t NULL_SYMBOL = UINT16_MAX;
-    constexpr uint8_t CHECKED = 1;
-    constexpr uint8_t UNCHECKED = 0;
+    constexpr u16 K_NULL_SYMBOL                     = UINT16_MAX;
+    constexpr u8 K_CHECKED                          = 1;
+    constexpr u8 K_UNCHECKED                        = 0;
+    constexpr usize K_MAX_OUTPUT_BUFFER_BYTE_SIZE   = 128 * 1024 * 1024; // 128 MiB
 
-    struct CodecIOState
+    template <typename T>
+    void LogToConsole(const T& msg)
     {
-        CodecIOState(const void* inputData, const size_t inputByteWidth, const void* const outputData);
-        CodecIOState(const char* inputFileName, const char* outputFileName);
+        std::cout << msg << std::endl;
+    }
+
+    class CodecIOState
+    {
+    public:
+        explicit CodecIOState(const u8* const inputData, const usize inputByteWidth, const u8* const outputData);
+        explicit CodecIOState(const std::string& inputFileName, const std::string& outputFileName);
         ~CodecIOState();
 
-        Tree* HuffmanTree;
-        char* InputFileName;
-        const void* InputData;
-        size_t InputByteWidth;
-        char* OutputFileName;
-        void* OutputData;
-        size_t OutputByteWidth;
+        inline Tree* GetTree() const { return _tree; }
+        inline const std::string& GetOutputFilename() const { return _outputFilename; }
+        inline u8* GetInputData() const { return _inputData; }
+        inline u8* GetOutputData() const { return _outputData; }
+        inline usize GetInputDataByteSize() const { return _inputDataByteSize; }
+        inline usize GetOutputDataByteSize() const { return _outputDataByteSize; }
+
+        inline void SetTree(const Tree* const tree) { _tree = (Tree*)tree; }
+        inline void SetOutputDataByteSize(const usize size) { _outputDataByteSize = size; }
+
+    private:
+        Tree* _tree = nullptr;
+        std::string _inputFilename = "";
+        std::string _outputFilename = "";
+        u8* _inputData = nullptr;
+        u8* _outputData = nullptr;
+        usize _inputDataByteSize = 0;
+        usize _outputDataByteSize = 0;
     };
 
     struct Symbol
     {
-        uint16_t Char;
-        size_t Freq;
+        u16 Char = K_NULL_SYMBOL;
+        usize Freq = 0;
     };
 
     struct TreeNode
     {
         Symbol Symbol;
-        uint8_t Flag;
-        uint32_t LeftIndex;
-        uint32_t RightIndex;
-        size_t BitCodeBitWidth;
-        uint64_t BitCode;
+        u8 Flag = 0;
+        u32 LeftIndex = 0;
+        u32 RightIndex = 0;
+        qword BitCode = 0;
+        usize BitCodeBitSize = 0;
     };
     
-    class Sorter
+    class Analyzer
     {
-        friend Tree;
+    public:
+        explicit Analyzer(const CodecIOState& state);
+        ~Analyzer() = default;
 
-        public:
-            explicit Sorter(CodecIOState& state);
-            ~Sorter();
+        inline usize GetUsedSymbolCount() const { return _usedSymbolCount; }
+        inline Symbol* GetTable() { return &_table[0]; }
 
-        private:
-            size_t _presentSymbolCount;
-            Symbol _table[256];
+    private:
+        usize _usedSymbolCount = 0;
+        Symbol _table[256];
     };
 
     class Tree
     {
-        friend Encoder;
+    public:
+        explicit Tree(CodecIOState& state, Analyzer& analyzer);
+        ~Tree();
 
-        public:
-            explicit Tree(CodecIOState& state, Sorter& sorter);
-            ~Tree();
+        void AssignCodes(const u32 index, const usize bitCodeBitWidth, const qword bitCode);
 
-            void AssignCodes(uint32_t index, size_t bitCodeBitWidth, uint64_t bitCode);
+        inline usize GetNodeCount() const { return _nodeCount; }
+        inline TreeNode* GetRoot() const { return _tree; }
+        inline const u32* GetSymbolTreeIndex() const { return &_symbolTreeIndex[0]; }
 
-        private:
-            size_t _nodeCount;
-            TreeNode* _tree;
-            uint32_t _symbolTreeIndex[256];
+    private:
+        usize _nodeCount = 0;
+        TreeNode* _tree = nullptr;
+        u32 _symbolTreeIndex[256] = {};
     };
 
     class BitWriter
     {
-        public:
-            explicit BitWriter(const void* const writeAddress);
-            ~BitWriter();
+    public:
+        explicit BitWriter(const u8* const writeAddress);
+        ~BitWriter() = default;
 
-            void WriteBits(const size_t count, const uint64_t bits);
-            void WriteBitsFromAddress(const size_t byteCount, const void* address);
-            void WriteRemainingBits();
-            size_t GetWrittenByteCount();
+        usize WriteBits(const usize count, const qword bits);
+        void WriteBitsFromAddress(const usize byteCount, const u8* const address);
+        void WriteRemainingBits();
+        usize GetWrittenByteCount();
 
-        private:
-            const void* _startAddress;
-            uint32_t* _writeAddress;
-            size_t _wordBitCount;
-            uint64_t _word;
+    private:
+        const u8* _startAddress = nullptr;
+        dword* _writeAddress = 0;
+        qword _word = 0;
+        usize _wordBitCount = 0;
     };
 
     class BitReader
     {
-        public:
-            explicit BitReader(const void* const readAddress);
-            ~BitReader();
+    public:
+        explicit BitReader(const u8* const readAddress);
+        ~BitReader() = default;
 
-            uint64_t ReadBits(size_t count, uint64_t mask);
-            void ReadBitsFromAddress(const size_t byteCount, void* const address);
-            uint16_t ReadBitsWithTreeNodes(const uint32_t rootNodeIndex, const TreeNode* treeNodes);
-            size_t GetReadByteCount();
+        qword ReadBits(const usize count, const qword mask, usize& bytesRead);
+        void ReadBitsFromAddress(const usize byteCount, void* const address, usize& bytesRead);
+        u16 ReadBitsWithTreeNodes(const u32 rootNodeIndex, const TreeNode* treeNodes, usize& bytesRead);
+        usize GetReadByteCount();
 
-        private:
-            const void* _startAddress;
-            uint32_t* _readAddress;
-            size_t _wordBitCount;
-            uint64_t _word;
+    private:
+        const u8* _startAddress = nullptr;
+        dword* _readAddress = nullptr;
+        usize _wordBitCount = 0;
+        qword _word = 0;
     };
 
     class Encoder
     {
-        public:
-            explicit Encoder(CodecIOState& state);
-            ~Encoder();
+    public:
+        explicit Encoder(CodecIOState& state);
+        ~Encoder() = default;
     };
 
     class Decoder
     {
-        public:
-            explicit Decoder(CodecIOState& state);
-            ~Decoder();
+    public:
+        explicit Decoder(CodecIOState& state);
+        ~Decoder() = default;
     };
 }

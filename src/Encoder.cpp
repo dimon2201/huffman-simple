@@ -3,49 +3,57 @@
 
 huffman_simple::Encoder::Encoder(CodecIOState& state)
 {
-    uint8_t* outputData = (uint8_t*)state.OutputData;
+    LogToConsole("Encoding input data...");
+
+    u8* outputData = (u8*)state.GetOutputData();
 
     // Write metadata
-    const Tree* tree = state.HuffmanTree;
-    const uint32_t treeByteWidth = sizeof(TreeNode) * tree->_nodeCount;
-    const uint32_t tableByteWidth = sizeof(uint32_t) * 256;
-    const size_t inputSymbolCount = state.InputByteWidth;
-    ((uint32_t*)outputData)[0] = treeByteWidth;
-    ((uint32_t*)outputData)[1] = tableByteWidth;
-    ((uint32_t*)outputData)[2] = inputSymbolCount;
+    const Tree* const tree = state.GetTree();
+    const TreeNode* root = tree->GetRoot();
+    const u32* symbolTreeIndex = tree->GetSymbolTreeIndex();
+    const u32 treeByteWidth = (u32)sizeof(TreeNode) * (u32)tree->GetNodeCount();
+    const u32 tableByteWidth = sizeof(u32) * 256;
+    const usize inputSymbolCount = state.GetInputDataByteSize();
+    ((u32*)outputData)[0] = treeByteWidth;
+    ((u32*)outputData)[1] = tableByteWidth;
+    ((u32*)outputData)[2] = (u32)inputSymbolCount;
     outputData += 12;
-    memcpy(outputData, tree->_tree, treeByteWidth);
+    memcpy(outputData, root, treeByteWidth);
     outputData += treeByteWidth;
-    memcpy(outputData, tree->_symbolTreeIndex, tableByteWidth);
+    memcpy(outputData, symbolTreeIndex, tableByteWidth);
     outputData += tableByteWidth;
 
     // Encode input data into Huffman codes
     BitWriter bw(outputData);
-    const uint8_t* inputData = (const uint8_t*)state.InputData;
-    for (size_t i = 0; i < state.InputByteWidth; ++i)
+    const u8* const inputData = (const u8* const)state.GetInputData();
+    for (usize i = 0; i < inputSymbolCount; ++i)
     {
-        const uint32_t treeIndex = tree->_symbolTreeIndex[inputData[i]];
-        const size_t bitCodeBitWidth = tree->_tree[treeIndex].BitCodeBitWidth;
-        const uint64_t bitCode = tree->_tree[treeIndex].BitCode;
-
-        bw.WriteBits(bitCodeBitWidth, bitCode);
+        const u32 treeIndex = symbolTreeIndex[inputData[i]];
+        const qword bitCode = root[treeIndex].BitCode;
+        const usize bitCodeBitWidth = root[treeIndex].BitCodeBitSize;
+        const usize bytesWritten = bw.WriteBits(bitCodeBitWidth, bitCode);
+        if (bytesWritten >= K_MAX_OUTPUT_BUFFER_BYTE_SIZE)
+        {
+            LogToConsole("Encoded output data byte size '" + std::to_string(bytesWritten) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
+            break;
+        }
     }
 
     bw.WriteRemainingBits();
-    state.OutputByteWidth = 12 + treeByteWidth + tableByteWidth + bw.GetWrittenByteCount();
+    state.SetOutputDataByteSize(12 + treeByteWidth + tableByteWidth + bw.GetWrittenByteCount());
 
     // Output to file if needed
-    if (state.OutputFileName == nullptr) { return; }
+    const std::string& outputFilename = state.GetOutputFilename();
+    if (outputFilename == "")
+        return;
 
-    std::ofstream ofs(state.OutputFileName, std::ios::out | std::ios::binary);
-    if (!ofs) { return; }
+    std::ofstream ofs(outputFilename, std::ios::out | std::ios::binary);
+    if (!ofs)
+        return;
 
-    const uint32_t outputByteWidth = (const uint32_t)state.OutputByteWidth;
-    ofs.write((const char*)state.OutputData, outputByteWidth);
+    const usize outputDataByteSize = state.GetOutputDataByteSize();
+    ofs.write((const char*)outputData, outputDataByteSize);
     ofs.close();
-}
 
-huffman_simple::Encoder::~Encoder()
-{
-
+    LogToConsole("    Success");
 }
