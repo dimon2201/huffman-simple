@@ -6,7 +6,7 @@ huffman_simple::CodecIOState::CodecIOState(const u8* const inputData, const usiz
     LogToConsole("Setting up codec state...");
 
     if (inputDataByteSize >= K_MAX_OUTPUT_BUFFER_BYTE_SIZE)
-        LogToConsole("Input data byte size '" + std::to_string(inputDataByteSize) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
+        LogToConsole("Error: Input data byte size '" + std::to_string(inputDataByteSize) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
 
     _inputData = (u8*)inputData;
     _outputData = (u8*)outputData;
@@ -19,7 +19,11 @@ huffman_simple::CodecIOState::CodecIOState(const u8* const inputData, const usiz
 huffman_simple::CodecIOState::CodecIOState(const std::string& inputFileName, const std::string& outputFileName)
 {
     std::ifstream ifs(inputFileName, std::ios::in | std::ios::binary);
-    if (!ifs) { return; }
+    if (!ifs)
+    {
+        LogToConsole("Error: Input file is invalid! The program's behavior is undefined!");
+        return;
+    }
     
     ifs.seekg(0, std::ios::end);
     _inputDataByteSize = ifs.tellg();

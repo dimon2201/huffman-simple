@@ -11,10 +11,10 @@ set(SOURCE_FILES
     src/bit_reader.cpp
     src/bit_writer.cpp
     src/codec_io_state.cpp
-    src/decoder.cpp
-    src/encoder.cpp
-    src/analyzer.cpp
-    src/tree.cpp
+    src/huff_encoder.cpp
+    src/huff_decoder.cpp
+    src/huff_analyzer.cpp
+    src/huff_tree.cpp
     samples/example.cpp
 )
 

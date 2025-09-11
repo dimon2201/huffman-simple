@@ -3,7 +3,12 @@
 
 huffman_simple::Decoder::Decoder(CodecIOState& state)
 {
-    LogToConsole("Decoding output data...");
+    const std::string& outputFilename = state.GetOutputFilename();
+    const std::string decodedOutputFileName = outputFilename + ".output";
+    if (outputFilename == "")
+        LogToConsole("Decoding output data...");
+    else
+        LogToConsole("Decoding output data to '" + decodedOutputFileName + "'...");
 
     u8* inputData = (u8*)state.GetOutputData();
 
@@ -32,7 +37,7 @@ huffman_simple::Decoder::Decoder(CodecIOState& state)
         outputData[i] = (u8)symbol;
         if (bytesRead >= K_MAX_OUTPUT_BUFFER_BYTE_SIZE)
         {
-            LogToConsole("Decoded input data byte size '" + std::to_string(bytesRead) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
+            LogToConsole("Error: Decoded input data byte size '" + std::to_string(bytesRead) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
             break;
         }
     }
@@ -40,15 +45,15 @@ huffman_simple::Decoder::Decoder(CodecIOState& state)
     free((void*)table);
 
     // Output to file if needed
-    const std::string& outputFilename = state.GetOutputFilename();
     if (outputFilename == "")
         return;
 
-    std::string outputFileName = outputFilename + ".output";
-    std::ofstream ofs(outputFileName.c_str(), std::ios::out | std::ios::binary);
+    std::ofstream ofs(decodedOutputFileName.c_str(), std::ios::out | std::ios::binary);
     if (!ofs)
+    {
+        LogToConsole("Error: Output file is invalid! The program's behavior is undefined!");
         return;
-
+    }
     ofs.write((const char*)outputData, inputSymbolCount);
     ofs.close();
 

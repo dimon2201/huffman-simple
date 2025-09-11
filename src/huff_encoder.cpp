@@ -3,7 +3,11 @@
 
 huffman_simple::Encoder::Encoder(CodecIOState& state)
 {
-    LogToConsole("Encoding input data...");
+    const std::string& outputFilename = state.GetOutputFilename();
+    if (outputFilename == "")
+        LogToConsole("Encoding input data...");
+    else
+        LogToConsole("Encoding input data to '" + outputFilename + "'...");
 
     u8* outputData = (u8*)state.GetOutputData();
 
@@ -34,7 +38,7 @@ huffman_simple::Encoder::Encoder(CodecIOState& state)
         const usize bytesWritten = bw.WriteBits(bitCodeBitWidth, bitCode);
         if (bytesWritten >= K_MAX_OUTPUT_BUFFER_BYTE_SIZE)
         {
-            LogToConsole("Encoded output data byte size '" + std::to_string(bytesWritten) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
+            LogToConsole("Error: Encoded output data byte size '" + std::to_string(bytesWritten) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
             break;
         }
     }
@@ -43,7 +47,6 @@ huffman_simple::Encoder::Encoder(CodecIOState& state)
     state.SetOutputDataByteSize(12 + treeByteWidth + tableByteWidth + bw.GetWrittenByteCount());
 
     // Output to file if needed
-    const std::string& outputFilename = state.GetOutputFilename();
     if (outputFilename == "")
         return;
 
