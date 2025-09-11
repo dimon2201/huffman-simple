@@ -8,7 +8,7 @@ Algorithm compresses text almost in half like a typical Huffman coder.<br>
 
 # Build
 Use CMake.<br>
-Compiled and tested with CMake 3.27.0, MinGW 13.1.0, Visual Studio 17 2022.<br>
+Compiled and tested on Windows 10 with CMake 3.27.0, MinGW 13.1.0, Visual Studio 17 2022.<br>
 
 # License
 The ISC License
