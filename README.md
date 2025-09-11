@@ -2,7 +2,7 @@
 Simple and unoptimized Huffman coding
 
 # Summary
-This implementation of Huffman coding is used for demonstration and educational purposes, no major optimizations were introduced.<br>
+This C++11 implementation of Huffman coding is used for demonstration and educational purposes, no major optimizations were introduced.<br>
 It is quite slow, but still can be used for practical projects.<br>
 Algorithm compresses text almost in half like a typical Huffman coder.<br>
 
