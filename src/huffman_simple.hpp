@@ -15,8 +15,7 @@ namespace huffman_simple
     constexpr u16 K_NULL_SYMBOL                     = UINT16_MAX;
     constexpr u8 K_CHECKED                          = 1;
     constexpr u8 K_UNCHECKED                        = 0;
-    constexpr usize K_MAX_OUTPUT_BUFFER_BYTE_SIZE   = 128 * 1024 * 1024; // 128 MiB
-
+    
     template <typename T>
     void LogToConsole(const T& msg)
     {
@@ -26,8 +25,8 @@ namespace huffman_simple
     class CodecIOState
     {
     public:
-        explicit CodecIOState(const u8* const inputData, const usize inputByteWidth, const u8* const outputData);
-        explicit CodecIOState(const std::string& inputFileName, const std::string& outputFileName);
+        explicit CodecIOState(const u8* const inputData, const usize inputByteWidth, const u8* const outputData, const usize maxOutputDataByteSize);
+        explicit CodecIOState(const std::string& inputFileName, const std::string& outputFileName, const usize maxOutputDataByteSize);
         ~CodecIOState();
 
         inline Tree* GetTree() const { return _tree; }
@@ -36,6 +35,7 @@ namespace huffman_simple
         inline u8* GetOutputData() const { return _outputData; }
         inline usize GetInputDataByteSize() const { return _inputDataByteSize; }
         inline usize GetOutputDataByteSize() const { return _outputDataByteSize; }
+        inline usize GetMaxOutputDataByteSize() const { return _maxOutputDataByteSize; }
 
         inline void SetTree(const Tree* const tree) { _tree = (Tree*)tree; }
         inline void SetOutputDataByteSize(const usize size) { _outputDataByteSize = size; }
@@ -48,6 +48,7 @@ namespace huffman_simple
         u8* _outputData = nullptr;
         usize _inputDataByteSize = 0;
         usize _outputDataByteSize = 0;
+        usize _maxOutputDataByteSize = 128 * 1024 * 1024; // 128 MiB
     };
 
     struct Symbol

@@ -11,6 +11,7 @@ huffman_simple::Decoder::Decoder(CodecIOState& state)
         LogToConsole("Decoding output data to '" + decodedOutputFileName + "'...");
 
     u8* inputData = (u8*)state.GetOutputData();
+    const usize maxOutputDataByteSize = state.GetMaxOutputDataByteSize();
 
     // Read metadata
     const usize treeByteSize = ((uint32_t*)inputData)[0];
@@ -35,9 +36,9 @@ huffman_simple::Decoder::Decoder(CodecIOState& state)
         usize bytesRead = 0;
         u16 symbol = br.ReadBitsWithTreeNodes(rootNodeIndex, tree, bytesRead);
         outputData[i] = (u8)symbol;
-        if (bytesRead >= K_MAX_OUTPUT_BUFFER_BYTE_SIZE)
+        if (bytesRead >= maxOutputDataByteSize)
         {
-            LogToConsole("Error: Decoded input data byte size '" + std::to_string(bytesRead) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
+            LogToConsole("Error: Decoded input data byte size '" + std::to_string(bytesRead) + "' exceeds limit '" + std::to_string(maxOutputDataByteSize) + "'! The program's behavior is undefined!");
             break;
         }
     }

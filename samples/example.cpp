@@ -22,7 +22,8 @@ int main()
 
 	auto start = std::chrono::high_resolution_clock::now();
 	
-    huffman_simple::CodecIOState state(inputFilename, outputFilename);
+    const usize maxOutputDataByteSize = 128 * 1024 * 1024;
+    huffman_simple::CodecIOState state(inputFilename, outputFilename, maxOutputDataByteSize);
     huffman_simple::Analyzer analyzer(state);
     huffman_simple::Tree tree(state, analyzer);
     huffman_simple::Encoder encPass1(state);

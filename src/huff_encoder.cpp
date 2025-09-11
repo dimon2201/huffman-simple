@@ -10,6 +10,7 @@ huffman_simple::Encoder::Encoder(CodecIOState& state)
         LogToConsole("Encoding input data to '" + outputFilename + "'...");
 
     u8* outputData = (u8*)state.GetOutputData();
+    const usize maxOutputDataByteSize = state.GetMaxOutputDataByteSize();
 
     // Write metadata
     const Tree* const tree = state.GetTree();
@@ -36,9 +37,9 @@ huffman_simple::Encoder::Encoder(CodecIOState& state)
         const qword bitCode = root[treeIndex].BitCode;
         const usize bitCodeBitWidth = root[treeIndex].BitCodeBitSize;
         const usize bytesWritten = bw.WriteBits(bitCodeBitWidth, bitCode);
-        if (bytesWritten >= K_MAX_OUTPUT_BUFFER_BYTE_SIZE)
+        if (bytesWritten >= maxOutputDataByteSize)
         {
-            LogToConsole("Error: Encoded output data byte size '" + std::to_string(bytesWritten) + "' exceeds limit '" + std::to_string(K_MAX_OUTPUT_BUFFER_BYTE_SIZE) + "'! The program's behavior is undefined!");
+            LogToConsole("Error: Encoded output data byte size '" + std::to_string(bytesWritten) + "' exceeds limit '" + std::to_string(maxOutputDataByteSize) + "'! The program's behavior is undefined!");
             break;
         }
     }
