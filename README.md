@@ -13,7 +13,7 @@ Compiled and tested on Windows 10 with CMake 3.27.0, MinGW 13.1.0, Visual Studio
 # License
 The ISC License
 
-Copyright (c) 2023, Dmitry Sirachenko
+Copyright (c) 2023-2025, Dmitry Sirachenko
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
