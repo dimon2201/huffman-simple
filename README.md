@@ -1,4 +1,4 @@
-# huffman-simple
+# Huffman Compression Example
 Simple and unoptimized Huffman coding
 
 # Summary
