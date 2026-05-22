@@ -1,5 +1,5 @@
 # Huffman Compression Example
-Simple and unoptimized Huffman coding
+Simple and elegant Huffman coding
 
 # Summary
 This C++11 implementation of Huffman coding is used for demonstration and educational purposes, no major optimizations were introduced.<br>
